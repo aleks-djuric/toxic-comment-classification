@@ -4,6 +4,7 @@
 import nltk, re
 import pandas as pd
 import numpy as np
+import pickle
 
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -13,7 +14,7 @@ global wv_model
 
 def clean_string(str, remove_stopwords=True, stem_words=False):
     # Remove special characters
-    strip_special_chars = re.compile('[^A-Za-z0-9 ]+')
+    strip_special_chars = re.compile('[^A-Za-z ]+')
     str = strip_special_chars.sub('', str.lower())
     # Split string into words
     words = str.split()
@@ -60,15 +61,24 @@ def prep_wv_train_data():
     np.savetxt("../data/wv_train_data.txt", clean_data, fmt='%s')
 
 
+
+
+
 def main():
 
     # Get word vector model
     wv_model = FTWordVectors()
-    # clean_data("../data/train.csv", "../data/test.csv")
-    # prep_wv_train_data()
-    # wv_model.create("../data/wv_train_data.txt")
-    wv_model.load()
+    if():
+        clean_data("../data/train.csv", "../data/test.csv")
+    if():
+        prep_wv_train_data()
+    if():
+        wv_model.train("../data/wv_train_data.txt")
+    else:
+        wv_model.load()
 
+    wv_model.create_embeddings();
+    save_obj(wv_model.embeddings, 'word_embeddings')
 
 
 if __name__ == '__main__':

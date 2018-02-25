@@ -42,7 +42,7 @@ class FastTextWrapper:
 
     def _retrieve_word_embeddings(self):
         """Retrives vocab of embedded words and their vectors"""
-        
+
         # Open model and retrieve word list + vectors
         path = self._ft_dir + "ft_model.vec"
         with open(path, 'r') as f:
@@ -85,7 +85,7 @@ class FastTextWrapper:
         return self.model[word]
 
 
-    def embedding_lookup(self, input_string):
+    def lookup_embeddings(self, input_string):
         """Returns string in word vector form"""
 
         if(self.model == None):

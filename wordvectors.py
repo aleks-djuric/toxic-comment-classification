@@ -1,10 +1,10 @@
+# Wrapper class for the fasttext word vector library
 # By Aleksandar Djuric
-# Created February 14, 2018
-# Last edited February 22, 2018
 
 import fasttext as ft
 import numpy as np
 import pickle
+import tqdm
 
 from sklearn.neighbors import BallTree
 
@@ -16,8 +16,8 @@ class FastTextWrapper:
         self._nearestNeighborTree = None
 
         self.model = None
-        self.word_vectors = None
-        self.vocab = None
+        self.word_vectors = []
+        self.vocab = []
 
 
     def train_model(self, train_txt, vector_len=100):
@@ -25,6 +25,7 @@ class FastTextWrapper:
 
         print("Creating new fasttext model...")
         output_path = self._ft_dir + "ft_model"
+        # Using skipgram model to learn vector representations
         self.model = ft.skipgram(train_txt, output_path, dim=vector_len)
         self._retrieve_word_embeddings()
         print("Done")
@@ -75,31 +76,73 @@ class FastTextWrapper:
             pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
-    def get_word_vector(self, word):
-        """Returns word vectors for in and out-of-vocab words"""
+    def get_embeddings(self, input_sequences, max_seq_len=500):
+        """Accepts an array of strings and returns
+        their embedded vector representations
+        Shape: (num_strings, num_words, vector_len)"""
 
         if(self.model == None):
             print("Please load or create a model")
             return
 
-        return self.model[word]
+        # Reserve 0 index as padding
+        embedding_size = self.word_vectors[0].size
+        self.word_vectors.insert(0, np.zeros(embedding_size))
+        # Create dict of embedding indices
+        indices = range(1, len(self.word_vectors))
+        index_dict = dict(zip(self.vocab, indices))
+
+        print("Looking up embeddings...")
+
+        progress_bar = tqdm.tqdm(total=len(input_sequences))
+
+        output_indices = []
+        seq_lens = []
+        for sequence in input_sequences:
+            # Pre-padded list
+            output_seq = [0 for _ in range(max_seq_len)]
+
+            sequence = sequence.split()
+
+            seq_len = len(sequence)
+
+            if seq_len > max_seq_len:
+                sequence = sequence[:max_seq_len]
+                seq_len = max_seq_len
+
+            seq_lens.append(seq_len)
+
+            for i, elem in enumerate(sequence):
+                if elem in index_dict:
+                    output_seq[i] = index_dict[elem]
+                else:
+                    index = len(self.word_vectors)
+                    output_seq[i] = index
+                    index_dict[elem] = index
+
+                    embedding = self.lookup_embedding(elem)
+                    self.word_vectors.append(embedding)
+
+            output_seq = np.stack(output_seq)
+            output_indices.append(output_seq)
+
+            progress_bar.update()
+
+        print("Done")
+        return np.stack(output_indices), np.stack(seq_lens)
 
 
-    def lookup_embeddings(self, input_string):
-        """Returns string in word vector form"""
+    def lookup_embedding(self, input_word):
+        """Returns embedded representations of a word"""
 
         if(self.model == None):
             print("Please load or create a model")
             return
 
-        string_embedded = []
-        for word in input_string:
-            string_embedded.append(self.model[word])
-
-        return string_embedded
+        return np.array(self.model[input_word])
 
 
-    def find_nn(self, query_word, num_neighbors=10):
+    def find_nearest_neighbours(self, query_word, num_neighbors=10):
         """Returns nearest neighbours and their distances
            for a given query word"""
 

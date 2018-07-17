@@ -1,6 +1,5 @@
+# A naive bayes model for toxic comment classification
 # By Aleksandar Djuric
-# Created on February 23, 2018
-# Last edited February 23, 2018
 
 import pandas as pd
 import numpy as np
@@ -11,7 +10,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk import FreqDist
 
 class TCCNBModel:
-    """The toxic comment classification lstm model"""
+    """The toxic comment classification NB model"""
 
     def __init__(self, vocab_size=10000):
         self._model = OneVsRestClassifier(MultinomialNB())
@@ -48,7 +47,6 @@ def main():
     # Get train data
     print("Loading train data...")
     train_data = pd.read_csv("../data/train_clean.csv")
-    print(train_data.isnull().sum())
     train_data = train_data.dropna(axis=0, how='any')
     train_comments = train_data['comment_text'].values
     labels = train_data.drop(
